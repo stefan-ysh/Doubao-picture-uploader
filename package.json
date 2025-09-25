@@ -8,16 +8,22 @@
     "build": "echo 'Vercel 会自动构建项目'",
     "deploy": "vercel --prod"
   },
-  "keywords": ["vercel", "image-upload", "pet", "cat", "shortcuts"],
+  "keywords": [
+    "vercel",
+    "image-upload",
+    "pet",
+    "cat",
+    "shortcuts"
+  ],
   "author": "stefan-ysh",
   "license": "MIT",
   "dependencies": {
     "@vercel/blob": "^0.20.0",
     "@vercel/kv": "^1.0.1",
-    "formidable": "^3.5.1",
     "exif-parser": "^0.1.12",
-    "uuid": "^9.0.1",
-    "mime-types": "^2.1.35"
+    "formidable": "^3.5.1",
+    "mime-types": "^2.1.35",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@types/formidable": "^3.4.5",
