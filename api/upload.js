@@ -3,7 +3,7 @@ import fs from 'fs';
 import { uploadImage, validateImage } from '../lib/storage.js';
 import { saveImageMetadata } from '../lib/database.js';
 import { extractExifData, generateImageSummary, validateImageIntegrity } from '../lib/metadata.js';
-import { setCorsHeaders, validateMethod, sendError, createSuccessResponse, ErrorCodes, safeLog } from '../../lib/errors.js';
+import { setCorsHeaders, validateMethod, sendError, createSuccessResponse, ErrorCodes, safeLog } from '../lib/errors.js';
 import mime from 'mime-types';
 
 // 配置 Vercel 无服务器函数
