@@ -1,4 +1,4 @@
-import { getImageList, searchImages, getStats } from '../lib/database.js';
+import { getImageList, searchImages, getStats } from '../../lib/database.js';
 
 /**
  * 图片列表 API
