@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>豆包照片上传器</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🐱 豆包照片上传器</h1>
+            <p>分享我家可爱猫咪豆包的精彩瞬间</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <div class="upload-card">
+                    <h2>上传新照片</h2>
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        <div class="file-input-wrapper">
+                            <input type="file" id="photoInput" name="photo" accept="image/*" capture="environment">
+                            <label for="photoInput" class="file-input-label">
+                                <span class="camera-icon">📷</span>
+                                <span class="text">选择或拍摄照片</span>
+                            </label>
+                        </div>
+                        
+                        <div class="preview-container" id="previewContainer" style="display: none;">
+                            <img id="previewImage" alt="Preview">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">照片描述（可选）</label>
+                            <textarea id="description" name="description" placeholder="记录豆包的可爱瞬间..."></textarea>
+                        </div>
+
+                        <button type="submit" class="upload-btn" id="uploadBtn">
+                            <span class="btn-text">上传照片</span>
+                            <span class="loading" style="display: none;">上传中...</span>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <section class="gallery-section">
+                <h2>豆包的照片集</h2>
+                <div class="gallery" id="gallery">
+                    <div class="loading-gallery">正在加载照片...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
