@@ -1,4 +1,4 @@
-import { getStats } from '../../lib/database.js';
+import { getStats } from '../lib/database.js';
 
 /**
  * 统计信息 API

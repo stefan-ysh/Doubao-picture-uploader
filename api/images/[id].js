@@ -1,4 +1,4 @@
-import { getImageById } from '../../lib/database.js';
+import { getImageById } from '../lib/database.js';
 
 /**
  * 单个图片详情 API

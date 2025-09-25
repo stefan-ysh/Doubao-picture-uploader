@@ -4,8 +4,8 @@
   "description": "豆包宠物猫图片上传服务 - 支持iOS快捷指令上传",
   "main": "index.js",
   "scripts": {
-    "dev": "vercel dev",
-    "build": "vercel build",
+    "start": "node -e \"console.log('请使用 vercel dev 命令启动开发服务器')\"",
+    "build": "echo 'Vercel 会自动构建项目'",
     "deploy": "vercel --prod"
   },
   "keywords": ["vercel", "image-upload", "pet", "cat", "shortcuts"],
