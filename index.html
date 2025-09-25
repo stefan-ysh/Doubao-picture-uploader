@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐱 豆包图片上传服务</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .cat-emoji {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #2d3748;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            color: #718096;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+        
+        .feature-list {
+            text-align: left;
+            margin: 30px 0;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            font-size: 1.1rem;
+        }
+        
+        .feature-emoji {
+            font-size: 1.5rem;
+            margin-right: 15px;
+        }
+        
+        .api-section {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        
+        .api-title {
+            font-size: 1.5rem;
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .endpoint {
+            background: #edf2f7;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .method-get {
+            color: #38a169;
+            font-weight: bold;
+        }
+        
+        .method-post {
+            color: #3182ce;
+            font-weight: bold;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #edf2f7;
+            color: #4a5568;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .footer {
+            margin-top: 40px;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .stat-item {
+            flex: 1;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="cat-emoji">🐱</div>
+        <h1>豆包图片上传服务</h1>
+        <p class="subtitle">为你的宠物猫豆包打造的专属相册服务</p>
+        
+        <div class="feature-list">
+            <div class="feature-item">
+                <span class="feature-emoji">📸</span>
+                <span>iOS 快捷指令一键上传</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-emoji">☁️</span>
+                <span>云端存储，自动备份</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-emoji">🔍</span>
+                <span>智能分类，轻松搜索</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-emoji">📊</span>
+                <span>统计分析，成长记录</span>
+            </div>
+        </div>
+        
+        <div class="stats" id="stats">
+            <div class="stat-item">
+                <span class="stat-number" id="totalImages">-</span>
+                <span class="stat-label">张照片</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="totalSize">-</span>
+                <span class="stat-label">MB 存储</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="serviceStatus">-</span>
+                <span class="stat-label">服务状态</span>
+            </div>
+        </div>
+        
+        <div class="api-section">
+            <div class="api-title">🔧 API 接口</div>
+            <div class="endpoint">
+                <span class="method-post">POST</span> /api/upload - 上传图片
+            </div>
+            <div class="endpoint">
+                <span class="method-get">GET</span> /api/images - 获取图片列表
+            </div>
+            <div class="endpoint">
+                <span class="method-get">GET</span> /api/stats - 获取统计信息
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <a href="/docs/api.md" class="btn btn-primary">📚 API 文档</a>
+            <a href="/docs/ios-shortcuts.md" class="btn btn-secondary">📱 快捷指令配置</a>
+            <a href="https://github.com/stefan-ysh/Doubao-picture-uploader" class="btn btn-secondary">🔗 GitHub</a>
+        </div>
+        
+        <div class="footer">
+            <p>Made with ❤️ for 豆包 🐱</p>
+            <p>基于 Vercel 部署 | MIT License</p>
+        </div>
+    </div>
+
+    <script>
+        // 加载统计信息
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('totalImages').textContent = data.data.totalImages || 0;
+                    document.getElementById('totalSize').textContent = data.data.totalSizeMB || 0;
+                    document.getElementById('serviceStatus').textContent = '✅';
+                } else {
+                    document.getElementById('serviceStatus').textContent = '❌';
+                }
+            } catch (error) {
+                console.error('加载统计信息失败:', error);
+                document.getElementById('totalImages').textContent = '0';
+                document.getElementById('totalSize').textContent = '0';
+                document.getElementById('serviceStatus').textContent = '❌';
+            }
+        }
+        
+        // 页面加载完成后获取统计信息
+        document.addEventListener('DOMContentLoaded', loadStats);
+    </script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "name": "doubao-picture-uploader",
+  "version": "1.0.0",
+  "description": "豆包宠物猫图片上传服务 - 支持iOS快捷指令上传",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "deploy": "vercel --prod"
+  },
+  "keywords": ["vercel", "image-upload", "pet", "cat", "shortcuts"],
+  "author": "stefan-ysh",
+  "license": "MIT",
+  "dependencies": {
+    "@vercel/blob": "^0.20.0",
+    "@vercel/kv": "^1.0.1",
+    "formidable": "^3.5.1",
+    "exif-parser": "^0.1.12",
+    "uuid": "^9.0.1",
+    "mime-types": "^2.1.35"
+  },
+  "devDependencies": {
+    "@types/formidable": "^3.4.5",
+    "@types/uuid": "^9.0.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
