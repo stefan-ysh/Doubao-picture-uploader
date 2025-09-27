@@ -62,11 +62,16 @@ export default async function handler(req, res) {
       // 时间信息
       uploadTime: image.uploadTime,
       shotTime: image.shotTime,
+      createDate: image.clientMetadata?.createDate || null,
+      modifyDate: image.clientMetadata?.modifyDate || null,
       
       // 设备和拍摄信息
-      device: image.summary?.device || null,
+      device: image.summary?.device || image.clientMetadata?.device || null,
       dimensions: image.summary?.dimensions || null,
       photoSettings: image.summary?.photoSettings || null,
+      
+      // 位置信息
+      location: image.summary?.location || image.clientMetadata?.location || null,
       
       // 标签和分类
       tags: image.tags || ['doubao', 'cat'],
@@ -77,6 +82,17 @@ export default async function handler(req, res) {
         settings: image.exifData.settings,
         image: image.exifData.image,
         hasGPS: image.exifData.gps?.latitude ? true : false
+      } : null,
+      
+      // 快捷指令客户端信息
+      clientInfo: image.clientMetadata ? {
+        device: image.clientMetadata.device,
+        extension: image.clientMetadata.extension,
+        originalSize: image.clientMetadata.clientSize,
+        originalWidth: image.clientMetadata.width,
+        originalHeight: image.clientMetadata.height,
+        sizeMatch: image.extra?.sizeMatch,
+        rawParams: image.clientMetadata.rawParams
       } : null,
       
       // 上传信息

@@ -72,9 +72,16 @@ export default async function handler(req, res) {
       mimeType: img.mimeType,
       uploadTime: img.uploadTime,
       shotTime: img.shotTime,
-      device: img.summary?.device || null,
+      device: img.summary?.device || img.clientMetadata?.device || null,
       dimensions: img.summary?.dimensions || null,
-      tags: img.tags || ['doubao', 'cat']
+      tags: img.tags || ['doubao', 'cat'],
+      // 新增位置信息预览
+      location: img.summary?.location ? {
+        city: img.summary.location.city,
+        formatted: img.summary.location.formatted
+      } : null,
+      // 快捷指令来源标识
+      uploadSource: img.extra?.uploadSource || 'unknown'
     }));
     
     // 计算分页信息

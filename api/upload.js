@@ -1,10 +1,11 @@
 import formidable from 'formidable';
 import fs from 'fs';
-import { uploadImage, validateImage } from '../lib/storage.js';
-import { saveImageMetadata } from '../lib/database.js';
-import { extractExifData, generateImageSummary, validateImageIntegrity } from '../lib/metadata.js';
-import { setCorsHeaders, validateMethod, sendError, createSuccessResponse, ErrorCodes, safeLog } from '../lib/errors.js';
 import mime from 'mime-types';
+
+import { saveImageMetadata } from '../lib/database.js';
+import { createSuccessResponse, ErrorCodes, safeLog, sendError, setCorsHeaders, validateMethod } from '../lib/errors.js';
+import { extractExifData, generateImageSummary, validateImageIntegrity } from '../lib/metadata.js';
+import { uploadImage, validateImage } from '../lib/storage.js';
 
 // 配置 Vercel 无服务器函数
 export const config = {
@@ -31,7 +32,8 @@ export default async function handler(req, res) {
     
     // 解析上传的文件
     const form = formidable({
-      maxFileSize: 4 * 1024 * 1024, // 4MB 限制
+      maxFileSize: 50 * 1024 * 1024, // 50MB 限制（适应高质量照片）
+      maxTotalFileSize: 50 * 1024 * 1024, // 总文件大小限制
       maxFiles: 1, // 一次只能上传一个文件
       allowEmptyFiles: false,
     });
@@ -47,13 +49,82 @@ export default async function handler(req, res) {
         code: 'NO_FILE_UPLOADED'
       });
     }
+    console.log(`接收到文件: ${uploadedFile.originalFilename} (${uploadedFile.size} bytes)`);    
+    // 解析快捷指令传来的额外参数
+    const clientParams = Object.entries(fields).reduce((acc, [key, value]) => {
+        acc[key] = Array.isArray(value) ? value[0] : value;
+        return acc;
+    }, {});
+
+    
+    // 处理快捷指令的时间格式
+    const parseShortcutDate = (dateStr) => {
+      if (!dateStr) return null;
+      try {
+        // 处理"2025年9月25日 22:15"格式
+        const match = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日\s*(\d{1,2}):(\d{1,2})/);
+        if (match) {
+          const [, year, month, day, hour, minute] = match;
+          return new Date(year, month - 1, day, hour, minute).toISOString();
+        }
+        return new Date(dateStr).toISOString();
+      } catch (error) {
+        console.warn('解析时间失败:', dateStr, error);
+        return null;
+      }
+    };
+    
+    // 处理地理位置信息
+    const parseLocation = (locationStr) => {
+      if (!locationStr) return null;
+      const parts = locationStr.split('\n').filter(Boolean);
+      return {
+        raw: locationStr,
+        formatted: parts.join(', '),
+        country: parts.find(p => p === '中国') || null,
+        province: parts.find(p => p.includes('省')) || null,
+        city: parts.find(p => p.includes('市') || p.includes('区')) || null,
+        detail: parts[0] || null
+      };
+    };
+
+    console.log('[ clientParams ] >', clientParams)
+
+    const clientMetadata = {
+      // 文件基本信息
+      originalName: clientParams.name || uploadedFile.originalFilename,
+      clientSize: clientParams.size ? parseInt(clientParams.size) : null,
+      clientType: clientParams.type || null,
+      extension: clientParams.extension || null,
+      
+      // 图片尺寸信息
+      width: clientParams.width ? parseInt(clientParams.width) : null,
+      height: clientParams.height ? parseInt(clientParams.height) : null,
+      
+      // 时间信息
+      shotTime: parseShortcutDate(clientParams.shotTime),
+      createDate: parseShortcutDate(clientParams.createDate),
+      modifyDate: parseShortcutDate(clientParams.modifyDate),
+      
+      // 设备信息
+      device: clientParams.device || null,
+      
+      // 位置信息
+      location: parseLocation(clientParams.location),
+      
+      // 原始参数（调试用）
+      rawParams: clientParams
+    };
     
     console.log('文件信息:', {
-      name: uploadedFile.originalFilename,
-      size: uploadedFile.size,
-      type: uploadedFile.mimetype
+      file: {
+        name: uploadedFile.originalFilename,
+        size: uploadedFile.size,
+        type: uploadedFile.mimetype
+      },
+      client: clientMetadata
     });
-    
+
     // 读取文件内容
     const fileBuffer = fs.readFileSync(uploadedFile.filepath);
     const mimeType = uploadedFile.mimetype || mime.lookup(uploadedFile.originalFilename) || 'application/octet-stream';
@@ -95,26 +166,54 @@ export default async function handler(req, res) {
     
     // 生成图片摘要
     const imageSummary = generateImageSummary(exifData, {
-      originalName: uploadedFile.originalFilename,
+      originalName: clientMetadata.originalName || uploadedFile.originalFilename,
       size: fileBuffer.length,
       mimeType: mimeType
     });
     
+    // 合并时间信息：优先使用快捷指令提供的时间，其次是EXIF时间
+    const finalShotTime = clientMetadata.shotTime || 
+                          imageSummary.shotTime || 
+                          clientMetadata.createDate || 
+                          new Date().toISOString();
+    
+    // 合并尺寸信息：优先使用客户端传来的尺寸，其次是EXIF尺寸
+    const finalDimensions = {
+      width: clientMetadata.width || imageSummary.dimensions?.width || null,
+      height: clientMetadata.height || imageSummary.dimensions?.height || null,
+      orientation: imageSummary.dimensions?.orientation || 1
+    };
+    
     // 准备元数据
     const metadata = {
       ...uploadResult,
-      shotTime: imageSummary.shotTime,
+      shotTime: finalShotTime,
       exifData: exifData,
-      summary: imageSummary,
+      summary: {
+        ...imageSummary,
+        shotTime: finalShotTime,
+        // 合并设备信息
+        device: clientMetadata.device || imageSummary.device,
+        // 合并尺寸信息
+        dimensions: finalDimensions,
+        // 添加位置信息
+        location: clientMetadata.location
+      },
+      // 快捷指令元数据
+      clientMetadata: clientMetadata,
       extra: {
         userAgent: req.headers['user-agent'],
-        uploadSource: 'api',
-        clientIP: req.headers['x-forwarded-for'] || req.connection?.remoteAddress
+        uploadSource: 'ios-shortcuts', // 标识来源
+        clientIP: req.headers['x-forwarded-for'] || req.connection?.remoteAddress,
+        // 文件大小验证
+        sizeMatch: clientMetadata.clientSize ? 
+          Math.abs(clientMetadata.clientSize - fileBuffer.length) < 1000 : true
       }
     };
     
     // 保存元数据到数据库
-    console.log('保存元数据到数据库...');
+    console.log('保存元数据到数据库...', metadata);
+
     await saveImageMetadata(uploadResult.id, metadata);
     
     // 清理临时文件
@@ -127,15 +226,32 @@ export default async function handler(req, res) {
         id: uploadResult.id,
         url: uploadResult.url,
         fileName: uploadResult.fileName,
-        originalName: uploadResult.originalName,
+        originalName: clientMetadata.originalName || uploadResult.originalName,
         size: uploadResult.size,
         mimeType: uploadResult.mimeType,
         uploadTime: metadata.summary.uploadTime,
-        shotTime: metadata.summary.shotTime,
+        shotTime: finalShotTime,
         device: metadata.summary.device,
-        dimensions: metadata.summary.dimensions
+        dimensions: finalDimensions,
+        // 新增位置信息
+        location: clientMetadata.location ? {
+          city: clientMetadata.location.city,
+          province: clientMetadata.location.province,
+          country: clientMetadata.location.country,
+          formatted: clientMetadata.location.formatted
+        } : null,
+        // 客户端信息
+        clientInfo: {
+          device: clientMetadata.device,
+          extension: clientMetadata.extension,
+          createDate: clientMetadata.createDate,
+          modifyDate: clientMetadata.modifyDate,
+          // 添加客户端报告的尺寸信息
+          originalWidth: clientMetadata.width,
+          originalHeight: clientMetadata.height
+        }
       },
-      message: '图片上传成功！豆包又有新照片啦 🐱'
+      message: `豆包照片上传成功！📸 来自 ${clientMetadata.device || '未知设备'} ${clientMetadata.location?.city || ''} 🐱`
     };
     
     console.log('上传成功:', uploadResult.id);
@@ -158,7 +274,7 @@ export default async function handler(req, res) {
     } else if (error.code === 'LIMIT_FILE_SIZE') {
       statusCode = 413;
       errorCode = 'FILE_TOO_LARGE';
-      errorMessage = '文件太大，请选择小于 4MB 的图片';
+      errorMessage = '文件太大，请选择小于 50MB 的图片';
     } else if (error.code === 'LIMIT_UNEXPECTED_FILE') {
       statusCode = 400;
       errorCode = 'INVALID_FIELD';
